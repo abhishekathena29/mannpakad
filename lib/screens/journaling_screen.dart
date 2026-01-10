@@ -78,24 +78,72 @@ class _JournalingScreenState extends State<JournalingScreen> {
   Widget build(BuildContext context) {
     final appState = AppStateScope.of(context);
 
-    if (isComplete) {
+    Widget buildGradientScaffold({
+      required Widget body,
+      PreferredSizeWidget? appBar,
+    }) {
       return Scaffold(
+        extendBodyBehindAppBar: true,
+        appBar: appBar,
+        body: Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: AppColors.gradientDark,
+            ),
+          ),
+          child: SafeArea(child: body),
+        ),
+      );
+    }
+
+    if (isComplete) {
+      return buildGradientScaffold(
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.book, color: AppColors.primary, size: 80),
-                const SizedBox(height: 16),
-                const Text('Journal Complete', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                Text('Weekly reflection builds lasting insights.',
-                    textAlign: TextAlign.center, style: TextStyle(color: AppColors.mutedText)),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => appState.setCurrentView(AppView.home),
-                  child: const Text('Back to Home'),
+                Container(
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withAlpha(20),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.primary.withAlpha(50)),
+                  ),
+                  child: const Icon(
+                    Icons.book,
+                    color: AppColors.primary,
+                    size: 64,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Journal Complete',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Weekly reflection builds lasting insights.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white.withAlpha(180)),
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => appState.setCurrentView(AppView.home),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: const Text('Back to Home'),
+                  ),
                 ),
               ],
             ),
@@ -107,10 +155,10 @@ class _JournalingScreenState extends State<JournalingScreen> {
     final step = steps[currentStep];
     final controller = _currentController();
 
-    return Scaffold(
+    return buildGradientScaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () {
             if (currentStep == 0) {
               appState.setCurrentView(AppView.home);
@@ -119,77 +167,152 @@ class _JournalingScreenState extends State<JournalingScreen> {
             }
           },
         ),
-        title: Text('Screen ${currentStep + 1} of ${steps.length}'),
+        title: Text(
+          'Screen ${currentStep + 1} of ${steps.length}',
+          style: const TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.transparent,
       ),
       body: Column(
         children: [
-          LinearProgressIndicator(
-            value: (currentStep + 1) / steps.length,
-            color: AppColors.primary,
-            backgroundColor: AppColors.muted,
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: (currentStep + 1) / steps.length,
+                color: AppColors.primary,
+                backgroundColor: Colors.white.withAlpha(30),
+                minHeight: 6,
+              ),
+            ),
           ),
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(step.title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 20)),
-                  const SizedBox(height: 4),
-                  Text(step.description, style: TextStyle(color: AppColors.mutedText)),
-                  const SizedBox(height: 16),
+                  Text(
+                    step.title,
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 24,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    step.description,
+                    style: TextStyle(
+                      color: Colors.white.withAlpha(150),
+                      fontSize: 16,
+                    ),
+                  ),
+                  const SizedBox(height: 32),
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: AppColors.muted,
-                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.white.withAlpha(10),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: Colors.white.withAlpha(10)),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text('Consider these questions:',
-                            style: TextStyle(fontWeight: FontWeight.w600)),
-                        const SizedBox(height: 8),
+                        const Text(
+                          'Consider these questions:',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
                         ...step.prompts.map((prompt) {
                           return Padding(
-                            padding: const EdgeInsets.only(bottom: 4),
-                            child: Text('• $prompt', style: TextStyle(color: AppColors.mutedText)),
+                            padding: const EdgeInsets.only(bottom: 8),
+                            child: Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  '•',
+                                  style: TextStyle(
+                                    color: Colors.white.withAlpha(150),
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    prompt,
+                                    style: TextStyle(
+                                      color: Colors.white.withAlpha(200),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
                           );
                         }).toList(),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  const Text('Your reflection:'),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 32),
+                  const Text(
+                    'Your reflection:',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
                   TextField(
                     controller: controller,
-                    maxLines: 6,
+                    maxLines: 8,
+                    style: const TextStyle(color: Colors.white, height: 1.5),
                     onChanged: (_) => setState(() {}),
                     decoration: InputDecoration(
                       filled: true,
-                      fillColor: AppColors.muted,
+                      fillColor: Colors.white.withAlpha(20),
+                      hintText: 'Type here...',
+                      hintStyle: TextStyle(color: Colors.white.withAlpha(100)),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(16),
                         borderSide: BorderSide.none,
                       ),
+                      contentPadding: const EdgeInsets.all(20),
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 24),
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: AppColors.calmLight,
-                      borderRadius: BorderRadius.circular(12),
+                      color: AppColors.calm.withAlpha(20),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: AppColors.calm.withAlpha(40)),
                     ),
-                    child: const Text('Focus on patterns, learning, and growth.'),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.psychology,
+                          color: AppColors.calmLight,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: const Text(
+                            'Focus on patterns, learning, and growth.',
+                            style: TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
           ),
           Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(24),
             child: SizedBox(
               width: double.infinity,
               child: ElevatedButton(
@@ -202,15 +325,28 @@ class _JournalingScreenState extends State<JournalingScreen> {
                           appState.addWeeklyJournal(
                             patternsAwareness: patternsController.text.trim(),
                             anxietyObservations: anxietyController.text.trim(),
-                            predictionsVsOutcomes: predictionsController.text.trim(),
-                            responseReflections: responsesController.text.trim(),
-                            commitmentNextSteps: commitmentController.text.trim(),
+                            predictionsVsOutcomes: predictionsController.text
+                                .trim(),
+                            responseReflections: responsesController.text
+                                .trim(),
+                            commitmentNextSteps: commitmentController.text
+                                .trim(),
                           );
-                          appState.earnReward(ExerciseType.journaling, 'Completed weekly journal');
+                          appState.earnReward(
+                            ExerciseType.journaling,
+                            'Completed weekly journal',
+                          );
                           setState(() => isComplete = true);
                         }
                       },
-                child: Text(currentStep == steps.length - 1 ? 'Complete Journal' : 'Next Section'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
+                child: Text(
+                  currentStep == steps.length - 1
+                      ? 'Complete Journal'
+                      : 'Next Section',
+                ),
               ),
             ),
           ),

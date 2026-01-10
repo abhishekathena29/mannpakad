@@ -18,30 +18,68 @@ class SUDSSlider extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.w600)),
+        Text(
+          label,
+          style: const TextStyle(
+            fontWeight: FontWeight.w600,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(height: 8),
         Row(
           children: [
             Expanded(
-              child: Slider(
-                value: value.toDouble(),
-                min: 0,
-                max: 100,
-                divisions: 20,
-                activeColor: AppColors.primary,
-                onChanged: (newValue) => onChanged(newValue.round()),
+              child: SliderTheme(
+                data: SliderThemeData(
+                  activeTrackColor: AppColors.primary,
+                  inactiveTrackColor: Colors.white.withAlpha(50),
+                  thumbColor: Colors.white,
+                  overlayColor: AppColors.primary.withAlpha(30),
+                  valueIndicatorColor: AppColors.primary,
+                  trackHeight: 4,
+                  thumbShape: const RoundSliderThumbShape(
+                    enabledThumbRadius: 8,
+                  ),
+                  overlayShape: const RoundSliderOverlayShape(
+                    overlayRadius: 20,
+                  ),
+                ),
+                child: Slider(
+                  value: value.toDouble(),
+                  min: 0,
+                  max: 100,
+                  divisions: 20,
+                  onChanged: (newValue) => onChanged(newValue.round()),
+                ),
               ),
             ),
-            SizedBox(
-              width: 48,
+            Container(
+              width: 50,
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: _getSudsColor(value).withAlpha(40),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: _getSudsColor(value).withAlpha(100)),
+              ),
               child: Text(
                 value.toString(),
-                textAlign: TextAlign.end,
-                style: const TextStyle(fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
             ),
           ],
         ),
       ],
     );
+  }
+
+  Color _getSudsColor(int suds) {
+    if (suds <= 30) return AppColors.success;
+    if (suds <= 50) return AppColors.warning;
+    if (suds <= 70) return AppColors.accent;
+    return AppColors.error;
   }
 }

@@ -1,4 +1,6 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:mannpakad/firebase_options.dart';
 import 'app_state.dart';
 import 'models.dart';
 import 'theme.dart';
@@ -17,8 +19,11 @@ import 'screens/cognitive_defusion_screen.dart';
 import 'screens/values_screen.dart';
 import 'screens/journaling_screen.dart';
 import 'screens/simulation_screen.dart';
+import 'screens/ai_exposure_screen.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   final appState = AppState();
   runApp(AppStateScope(notifier: appState, child: const MannPakadApp()));
 }
@@ -29,7 +34,8 @@ class MannPakadApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'ERP Companion',
+      title: 'Mann Pakad',
+      debugShowCheckedModeBanner: false,
       theme: buildAppTheme(),
       home: const AppShell(),
     );
@@ -79,6 +85,8 @@ class AppShell extends StatelessWidget {
         return const JournalingScreen();
       case AppView.simulation:
         return const SimulationScreen();
+      case AppView.aiExposure:
+        return const AIExposureScreen();
       default:
         return const HomeScreen();
     }

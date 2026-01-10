@@ -18,6 +18,7 @@ enum AppView {
   simulation,
   reflection,
   quickHelp,
+  aiExposure,
 }
 
 enum AgeMode { younger, older }
@@ -595,4 +596,83 @@ extension ExerciseTypeLabel on ExerciseType {
         return 'Simulation';
     }
   }
+}
+
+// AI Exposure Task Types
+
+enum QuestionType { mcq, shortAnswer }
+
+enum ReflectionCategory {
+  taskEngagement,
+  responsePrevention,
+  inhibitoryLearning,
+  habituation,
+  learningConsolidation,
+}
+
+@immutable
+class AIExposureTask {
+  final String id;
+  final String title;
+  final String description;
+  final String purpose;
+  final int sudsLevel;
+  final ExerciseType exerciseType;
+  final OCDTheme ocdTheme;
+  final String duration;
+  final List<String> steps;
+
+  const AIExposureTask({
+    required this.id,
+    required this.title,
+    required this.description,
+    required this.purpose,
+    required this.sudsLevel,
+    required this.exerciseType,
+    required this.ocdTheme,
+    required this.duration,
+    required this.steps,
+  });
+}
+
+@immutable
+class AIReflectionQuestion {
+  final String id;
+  final String question;
+  final ReflectionCategory category;
+  final QuestionType type;
+  final bool isRequired;
+  final List<String>? options;
+
+  const AIReflectionQuestion({
+    required this.id,
+    required this.question,
+    required this.category,
+    required this.type,
+    required this.isRequired,
+    this.options,
+  });
+}
+
+@immutable
+class AIExposureSession {
+  final String id;
+  final AIExposureTask task;
+  final int preSuds;
+  final int postSuds;
+  final Map<String, String> reflectionResponses;
+  final int duration;
+  final bool completed;
+  final DateTime createdAt;
+
+  const AIExposureSession({
+    required this.id,
+    required this.task,
+    required this.preSuds,
+    required this.postSuds,
+    required this.reflectionResponses,
+    required this.duration,
+    required this.completed,
+    required this.createdAt,
+  });
 }

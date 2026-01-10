@@ -10,95 +10,149 @@ class AppHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final appState = AppStateScope.of(context);
     final avatar = appState.avatar;
+
     return Container(
-      padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          bottom: BorderSide(color: Color(0xFFE2E8F0)),
-        ),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        MediaQuery.of(context).padding.top + 12,
+        20,
+        16,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.transparent, // Transparent for gradient background
       ),
       child: Row(
         children: [
-          if (avatar != null)
-            Container(
+          // Avatar with gradient ring
+          Container(
+            padding: const EdgeInsets.all(2),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              gradient: LinearGradient(colors: AppColors.gradientPrimary),
+              boxShadow: [
+                BoxShadow(
+                  color: AppColors.primary.withAlpha(100),
+                  blurRadius: 12,
+                  spreadRadius: 2,
+                ),
+              ],
+            ),
+            child: Container(
               width: 44,
               height: 44,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: LinearGradient(
-                  colors: [AppColors.primaryLight, AppColors.calmLight],
-                ),
+                color: const Color(0xFF1a1a2e), // Match dark bg
               ),
               child: Center(
                 child: Text(
-                  avatar.style.emoji,
-                  style: const TextStyle(fontSize: 20),
+                  avatar?.style.emoji ?? '🧠',
+                  style: const TextStyle(fontSize: 22),
                 ),
               ),
             ),
-          if (avatar != null) const SizedBox(width: 12),
+          ),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
                 Text(
-                  'Hi there!',
+                  _getGreeting(),
                   style: TextStyle(
-                    color: AppColors.mutedText,
+                    color: Colors.white.withAlpha(180),
                     fontSize: 12,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
+                const SizedBox(height: 2),
                 Text(
-                  avatar?.name ?? 'Welcome',
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  avatar?.name ?? 'MannPakad',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 18,
+                    letterSpacing: -0.5,
+                    color: Colors.white,
+                  ),
                 ),
               ],
             ),
           ),
-          _Badge(
-            icon: Icons.local_fire_department,
-            label: appState.progress.currentStreak.toString(),
+          // Streak Badge
+          _StatBadge(
+            icon: Icons.local_fire_department_rounded,
+            value: appState.progress.currentStreak.toString(),
+            color: AppColors.accent,
           ),
           const SizedBox(width: 8),
-          _Badge(
-            icon: Icons.monetization_on,
-            label: appState.progress.totalCoins.toString(),
+          // Coins Badge
+          _StatBadge(
+            icon: Icons.stars_rounded,
+            value: appState.progress.totalCoins.toString(),
+            color: AppColors.primary,
           ),
-          IconButton(
-            onPressed: () => appState.setCurrentView(AppView.settings),
-            icon: const Icon(Icons.settings),
+          const SizedBox(width: 8),
+          // Settings
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha(30),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.white.withAlpha(30)),
+            ),
+            child: IconButton(
+              onPressed: () => appState.setCurrentView(AppView.settings),
+              icon: Icon(Icons.settings_rounded, size: 20, color: Colors.white),
+              padding: EdgeInsets.zero,
+            ),
           ),
         ],
       ),
     );
   }
+
+  String _getGreeting() {
+    final hour = DateTime.now().hour;
+    if (hour < 12) return 'Good morning 👋';
+    if (hour < 17) return 'Good afternoon ☀️';
+    return 'Good evening 🌙';
+  }
 }
 
-class _Badge extends StatelessWidget {
+class _StatBadge extends StatelessWidget {
   final IconData icon;
-  final String label;
+  final String value;
+  final Color color;
 
-  const _Badge({
+  const _StatBadge({
     required this.icon,
-    required this.label,
+    required this.value,
+    required this.color,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
       decoration: BoxDecoration(
-        color: AppColors.muted,
-        borderRadius: BorderRadius.circular(16),
+        color: color.withAlpha(40),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withAlpha(100)),
       ),
       child: Row(
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 16, color: AppColors.mutedText),
+          Icon(icon, size: 16, color: color),
           const SizedBox(width: 4),
           Text(
-            label,
-            style: const TextStyle(fontWeight: FontWeight.bold),
+            value,
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 14,
+              color: Colors.white,
+            ),
           ),
         ],
       ),

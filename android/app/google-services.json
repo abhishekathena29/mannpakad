@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "896657963986",
+    "firebase_url": "https://mannpakad-default-rtdb.asia-southeast1.firebasedatabase.app",
+    "project_id": "mannpakad",
+    "storage_bucket": "mannpakad.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:896657963986:android:6f56f9706115caab93260b",
+        "android_client_info": {
+          "package_name": "com.example.mannpakad"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC7V4uBrONzORbdfX42Y6IV-CUXIWjGapI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

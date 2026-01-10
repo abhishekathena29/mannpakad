@@ -21,54 +21,94 @@ class FeatureCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: const Color(0xFFE2E8F0)),
-        ),
-        child: Row(
-          children: [
-            if (leading != null)
-              Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: (accentColor ?? AppColors.primary).withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(12),
+    final color = accentColor ?? AppColors.primary;
+
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: Colors.white.withAlpha(20), // Glassmorphism
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withAlpha(30)),
+          ),
+          child: Row(
+            children: [
+              if (leading != null)
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [color.withAlpha(50), color.withAlpha(80)],
+                    ),
+                    borderRadius: BorderRadius.circular(14),
+                    border: Border.all(color: color.withAlpha(100)),
+                  ),
+                  child: Center(child: leading),
                 ),
-                child: Center(child: leading),
-              ),
-            if (leading != null) const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style:
-                          const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-                  const SizedBox(height: 4),
-                  Text(description,
-                      style: TextStyle(color: AppColors.mutedText, fontSize: 12)),
-                ],
-              ),
-            ),
-            if (badge != null)
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                decoration: BoxDecoration(
-                  color: AppColors.muted,
-                  borderRadius: BorderRadius.circular(12),
+              if (leading != null) const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 16,
+                        letterSpacing: -0.3,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: TextStyle(
+                        color: Colors.white.withAlpha(180),
+                        fontSize: 13,
+                        height: 1.3,
+                      ),
+                    ),
+                  ],
                 ),
-                child: Text(badge!,
-                    style:
-                        TextStyle(color: AppColors.mutedText, fontSize: 11)),
               ),
-          ],
+              if (badge != null)
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 10,
+                    vertical: 5,
+                  ),
+                  decoration: BoxDecoration(
+                    gradient: badge == 'NEW'
+                        ? LinearGradient(colors: AppColors.gradientPrimary)
+                        : null,
+                    color: badge != 'NEW' ? Colors.white.withAlpha(30) : null,
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Text(
+                    badge!,
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                ),
+              const SizedBox(width: 8),
+              Icon(
+                Icons.chevron_right_rounded,
+                color: Colors.white.withAlpha(100),
+                size: 20,
+              ),
+            ],
+          ),
         ),
       ),
     );

@@ -94,22 +94,23 @@ class _SimulationScreenState extends State<SimulationScreen> {
   void _completeSimulation() {
     final appState = AppStateScope.of(context);
     sessionId = DateTime.now().millisecondsSinceEpoch.toString();
-    final hierarchyItem = appState.fearHierarchy
-        .firstWhere((item) => item.suds == selectedScenario?.levels[selectedLevel - 1].suds,
-            orElse: () => appState.fearHierarchy.isNotEmpty
-                ? appState.fearHierarchy.first
-                : FearHierarchyItem(
-                    id: '',
-                    scenario: '',
-                    suds: 0,
-                    exposureType: ExposureType.simulation,
-                    exerciseType: ExerciseType.simulation,
-                    hierarchyLevel: 1,
-                    tags: const [],
-                    completed: false,
-                    completedCount: 0,
-                    createdAt: DateTime.now(),
-                  ));
+    final hierarchyItem = appState.fearHierarchy.firstWhere(
+      (item) => item.suds == selectedScenario?.levels[selectedLevel - 1].suds,
+      orElse: () => appState.fearHierarchy.isNotEmpty
+          ? appState.fearHierarchy.first
+          : FearHierarchyItem(
+              id: '',
+              scenario: '',
+              suds: 0,
+              exposureType: ExposureType.simulation,
+              exerciseType: ExerciseType.simulation,
+              hierarchyLevel: 1,
+              tags: const [],
+              completed: false,
+              completedCount: 0,
+              createdAt: DateTime.now(),
+            ),
+    );
     appState.addSimulationSession(
       hierarchyItemId: hierarchyItem.id,
       hierarchyLevel: selectedLevel,
@@ -131,6 +132,26 @@ class _SimulationScreenState extends State<SimulationScreen> {
     return '${mins.toString()}:${secs.toString().padLeft(2, '0')}';
   }
 
+  Widget buildGradientScaffold({
+    required Widget body,
+    PreferredSizeWidget? appBar,
+  }) {
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: appBar,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: AppColors.gradientDark,
+          ),
+        ),
+        child: SafeArea(child: body),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final appState = AppStateScope.of(context);
@@ -148,23 +169,51 @@ class _SimulationScreenState extends State<SimulationScreen> {
     }
 
     if (phase == SimulationPhase.complete) {
-      return Scaffold(
+      return buildGradientScaffold(
         body: Center(
           child: Padding(
             padding: const EdgeInsets.all(24),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.check_circle, color: AppColors.primary, size: 80),
-                const SizedBox(height: 16),
-                const Text('Simulation Complete', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 8),
-                Text('Imaginal exposure prepares you for real-world practice.',
-                    textAlign: TextAlign.center, style: TextStyle(color: AppColors.mutedText)),
-                const SizedBox(height: 16),
-                ElevatedButton(
-                  onPressed: () => appState.setCurrentView(AppView.home),
-                  child: const Text('Back to Home'),
+                Container(
+                  padding: const EdgeInsets.all(32),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withAlpha(20),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: AppColors.primary.withAlpha(50)),
+                  ),
+                  child: const Icon(
+                    Icons.check_circle,
+                    color: AppColors.primary,
+                    size: 64,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Simulation Complete',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Text(
+                  'Imaginal exposure prepares you for real-world practice.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(color: Colors.white.withAlpha(180)),
+                ),
+                const SizedBox(height: 32),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: () => appState.setCurrentView(AppView.home),
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    child: const Text('Back to Home'),
+                  ),
                 ),
               ],
             ),
@@ -175,56 +224,125 @@ class _SimulationScreenState extends State<SimulationScreen> {
 
     if (phase == SimulationPhase.simulation && selectedScenario != null) {
       final progress = elapsedTime / targetDuration;
-      return Scaffold(
+      return buildGradientScaffold(
         appBar: AppBar(
-          title: Text('Level $selectedLevel'),
+          title: Text(
+            'Level $selectedLevel',
+            style: const TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.transparent,
           actions: [
             Padding(
               padding: const EdgeInsets.all(12),
-              child: Center(child: Text(formatTime(elapsedTime))),
+              child: Center(
+                child: Text(
+                  formatTime(elapsedTime),
+                  style: const TextStyle(color: Colors.white),
+                ),
+              ),
             ),
           ],
         ),
         body: Column(
           children: [
-            LinearProgressIndicator(value: progress, color: AppColors.primary),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: progress,
+                  color: AppColors.primary,
+                  backgroundColor: Colors.white.withAlpha(30),
+                  minHeight: 8,
+                ),
+              ),
+            ),
             Expanded(
               child: Padding(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(24),
                 child: Column(
                   children: [
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          children: [
-                            Text(selectedScenario!.icon, style: const TextStyle(fontSize: 32)),
-                            const SizedBox(height: 8),
-                            Text(selectedScenario!.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 8),
-                            Text(selectedScenario!.levels[selectedLevel - 1].task,
-                                textAlign: TextAlign.center, style: TextStyle(color: AppColors.mutedText)),
-                          ],
-                        ),
+                    Container(
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withAlpha(20),
+                        borderRadius: BorderRadius.circular(24),
+                        border: Border.all(color: Colors.white.withAlpha(20)),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            selectedScenario!.icon,
+                            style: const TextStyle(fontSize: 48),
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            selectedScenario!.title,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              fontSize: 18,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            selectedScenario!.levels[selectedLevel - 1].task,
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: Colors.white.withAlpha(180),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 24),
                     Wrap(
-                      spacing: 12,
-                      runSpacing: 12,
+                      spacing: 16,
+                      runSpacing: 16,
+                      alignment: WrapAlignment.center,
                       children: [
-                        _choiceButton('avoid', Icons.warning, Colors.red, () => addChoice('avoid')),
-                        _choiceButton('engage', Icons.pan_tool, AppColors.calm, () => addChoice('touch')),
-                        _choiceButton('delay', Icons.timer, AppColors.mutedText, () => addChoice('delay-compulsion')),
-                        _choiceButton('resist', Icons.shield, AppColors.primary, () => addChoice('resist')),
+                        _choiceButton(
+                          'avoid',
+                          Icons.warning_amber_rounded,
+                          Colors.red.withAlpha(200),
+                          () => addChoice('avoid'),
+                        ),
+                        _choiceButton(
+                          'engage',
+                          Icons.pan_tool_rounded,
+                          AppColors.calm,
+                          () => addChoice('touch'),
+                        ),
+                        _choiceButton(
+                          'delay',
+                          Icons.timer_outlined,
+                          Colors.orange.withAlpha(200),
+                          () => addChoice('delay-compulsion'),
+                        ),
+                        _choiceButton(
+                          'resist',
+                          Icons.shield_outlined,
+                          AppColors.primary,
+                          () => addChoice('resist'),
+                        ),
                       ],
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 24),
                     if (choices.isNotEmpty)
                       Wrap(
-                        spacing: 6,
+                        spacing: 8,
                         children: choices.take(5).map((choice) {
-                          return Chip(label: Text(choice.action));
+                          return Chip(
+                            label: Text(
+                              choice.action,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 12,
+                              ),
+                            ),
+                            backgroundColor: Colors.white.withAlpha(15),
+                            side: BorderSide.none,
+                          );
                         }).toList(),
                       ),
                     const Spacer(),
@@ -233,7 +351,13 @@ class _SimulationScreenState extends State<SimulationScreen> {
                         isRunning = false;
                         _completeSimulation();
                       },
-                      child: const Text('End Simulation Early'),
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: Colors.white.withAlpha(50)),
+                      ),
+                      child: const Text(
+                        'End Simulation Early',
+                        style: TextStyle(color: Colors.white),
+                      ),
                     ),
                   ],
                 ),
@@ -245,25 +369,44 @@ class _SimulationScreenState extends State<SimulationScreen> {
     }
 
     if (phase == SimulationPhase.scenario && selectedScenario != null) {
-      return Scaffold(
+      return buildGradientScaffold(
         appBar: AppBar(
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
+            icon: const Icon(Icons.arrow_back, color: Colors.white),
             onPressed: () => setState(() => phase = SimulationPhase.select),
           ),
-          title: Text(selectedScenario!.title),
+          title: Text(
+            selectedScenario!.title,
+            style: const TextStyle(color: Colors.white),
+          ),
+          backgroundColor: Colors.transparent,
         ),
         body: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: AppColors.accentLight,
-                  borderRadius: BorderRadius.circular(12),
+                  color: AppColors.accent.withAlpha(20),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: AppColors.accent.withAlpha(40)),
                 ),
-                child: Text(selectedScenario!.description),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.lightbulb_outline,
+                      color: AppColors.accentLight,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        selectedScenario!.description,
+                        style: const TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
+                ),
               ),
               const SizedBox(height: 16),
               Expanded(
@@ -271,13 +414,76 @@ class _SimulationScreenState extends State<SimulationScreen> {
                   itemCount: selectedScenario!.levels.length,
                   itemBuilder: (context, index) {
                     final level = selectedScenario!.levels[index];
-                    return Card(
-                      child: ListTile(
-                        title: Text('Level ${level.level}'),
-                        subtitle: Text(level.task),
-                        trailing: Text('SUDs ${level.suds}'),
-                        selected: selectedLevel == level.level,
-                        onTap: () => setState(() => selectedLevel = level.level),
+                    final active = selectedLevel == level.level;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 8),
+                      child: InkWell(
+                        onTap: () =>
+                            setState(() => selectedLevel = level.level),
+                        borderRadius: BorderRadius.circular(16),
+                        child: AnimatedContainer(
+                          duration: const Duration(milliseconds: 200),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: active
+                                ? AppColors.primary.withAlpha(50)
+                                : Colors.white.withAlpha(10),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: active
+                                  ? AppColors.primary
+                                  : Colors.white.withAlpha(10),
+                            ),
+                          ),
+                          child: Row(
+                            children: [
+                              Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withAlpha(20),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    '${level.level}',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      level.task,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    Text(
+                                      'SUDs ${level.suds}',
+                                      style: TextStyle(
+                                        color: Colors.white.withAlpha(150),
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (active)
+                                const Icon(
+                                  Icons.check_circle,
+                                  color: AppColors.primary,
+                                ),
+                            ],
+                          ),
+                        ),
                       ),
                     );
                   },
@@ -289,6 +495,9 @@ class _SimulationScreenState extends State<SimulationScreen> {
                   onPressed: startSimulation,
                   icon: const Icon(Icons.play_arrow),
                   label: const Text('Start Simulation'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
                 ),
               ),
             ],
@@ -297,13 +506,14 @@ class _SimulationScreenState extends State<SimulationScreen> {
       );
     }
 
-    return Scaffold(
+    return buildGradientScaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => appState.setCurrentView(AppView.home),
         ),
-        title: const Text('Simulations'),
+        title: const Text('Simulations', style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.transparent,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -311,30 +521,87 @@ class _SimulationScreenState extends State<SimulationScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(12),
+                color: AppColors.primary.withAlpha(20),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.primary.withAlpha(40)),
               ),
-              child: const Text(
-                'Avatar-based simulations for imaginal exposure. Practice facing fears before real-world exposures.',
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.videogame_asset,
+                    color: AppColors.primaryLight,
+                    size: 32,
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: const Text(
+                      'Avatar-based simulations for imaginal exposure. Practice facing fears before real-world exposures.',
+                      style: TextStyle(color: Colors.white, height: 1.4),
+                    ),
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             Expanded(
               child: ListView.builder(
                 itemCount: scenarios.length,
                 itemBuilder: (context, index) {
                   final scenario = scenarios[index];
-                  return Card(
-                    child: ListTile(
-                      leading: Text(scenario.icon, style: const TextStyle(fontSize: 24)),
-                      title: Text(scenario.title),
-                      subtitle: Text(scenario.description),
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: InkWell(
                       onTap: () => setState(() {
                         selectedScenario = scenario;
                         phase = SimulationPhase.scenario;
                       }),
+                      borderRadius: BorderRadius.circular(16),
+                      child: Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withAlpha(10),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.white.withAlpha(10)),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(
+                              scenario.icon,
+                              style: const TextStyle(fontSize: 32),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    scenario.title,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 16,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    scenario.description,
+                                    style: TextStyle(
+                                      color: Colors.white.withAlpha(150),
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(
+                              Icons.chevron_right,
+                              color: Colors.white54,
+                            ),
+                          ],
+                        ),
+                      ),
                     ),
                   );
                 },
@@ -346,12 +613,30 @@ class _SimulationScreenState extends State<SimulationScreen> {
     );
   }
 
-  Widget _choiceButton(String label, IconData icon, Color color, VoidCallback onTap) {
-    return ElevatedButton.icon(
+  Widget _choiceButton(
+    String label,
+    IconData icon,
+    Color color,
+    VoidCallback onTap,
+  ) {
+    return ElevatedButton(
       onPressed: onTap,
-      icon: Icon(icon, color: Colors.white),
-      style: ElevatedButton.styleFrom(backgroundColor: color),
-      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color.withAlpha(80),
+        foregroundColor: Colors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: color.withAlpha(100)),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      ),
+      child: Column(
+        children: [
+          Icon(icon, color: Colors.white, size: 24),
+          const SizedBox(height: 4),
+          Text(label, style: const TextStyle(fontSize: 12)),
+        ],
+      ),
     );
   }
 }

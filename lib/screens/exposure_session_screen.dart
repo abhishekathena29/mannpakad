@@ -79,11 +79,32 @@ class _ExposureSessionScreenState extends State<ExposureSessionScreen> {
     return '${mins.toString()}:${secs.toString().padLeft(2, '0')}';
   }
 
+  Widget buildGradientScaffold({
+    required Widget body,
+    PreferredSizeWidget? appBar,
+  }) {
+    return Scaffold(
+      extendBodyBehindAppBar: true,
+      appBar: appBar,
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: AppColors.gradientDark,
+          ),
+        ),
+        child: SafeArea(child: body),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final appState = AppStateScope.of(context);
     final selectedTask = _resolveSelectedTask(appState);
-    final task = selectedTask ??
+    final task =
+        selectedTask ??
         (appState.fearHierarchy.isNotEmpty
             ? appState.fearHierarchy.first
             : FearHierarchyItem(
@@ -114,20 +135,26 @@ class _ExposureSessionScreenState extends State<ExposureSessionScreen> {
   }
 
   Widget _buildSelect(AppState appState, FearHierarchyItem? selectedTask) {
-    return Scaffold(
+    return buildGradientScaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => appState.setCurrentView(AppView.home),
         ),
-        title: const Text('Start Exposure'),
+        title: const Text(
+          'Start Exposure',
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.transparent,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Text('Choose an exposure task to practice',
-                style: TextStyle(color: AppColors.mutedText)),
+            Text(
+              'Choose an exposure task to practice',
+              style: TextStyle(color: Colors.white.withAlpha(150)),
+            ),
             const SizedBox(height: 16),
             Expanded(
               child: appState.fearHierarchy.isEmpty
@@ -135,11 +162,16 @@ class _ExposureSessionScreenState extends State<ExposureSessionScreen> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Text('No exposure tasks yet.',
-                              style: TextStyle(color: AppColors.mutedText)),
+                          Text(
+                            'No exposure tasks yet.',
+                            style: TextStyle(
+                              color: Colors.white.withAlpha(150),
+                            ),
+                          ),
                           const SizedBox(height: 12),
                           ElevatedButton(
-                            onPressed: () => appState.setCurrentView(AppView.hierarchy),
+                            onPressed: () =>
+                                appState.setCurrentView(AppView.hierarchy),
                             child: const Text('Create Your First Task'),
                           ),
                         ],
@@ -150,16 +182,40 @@ class _ExposureSessionScreenState extends State<ExposureSessionScreen> {
                       itemBuilder: (context, index) {
                         final item = appState.fearHierarchy[index];
                         final selected = selectedTaskId == item.id;
-                        return Card(
+                        return Container(
                           margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: selected
+                                ? AppColors.primary.withAlpha(50)
+                                : Colors.white.withAlpha(10),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: selected
+                                  ? AppColors.primary
+                                  : Colors.white.withAlpha(10),
+                            ),
+                          ),
                           child: ListTile(
-                            onTap: () => setState(() => selectedTaskId = item.id),
-                            title: Text(item.scenario),
+                            onTap: () =>
+                                setState(() => selectedTaskId = item.id),
+                            title: Text(
+                              item.scenario,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
                             subtitle: Text(
                               'Level ${item.hierarchyLevel} · SUDs ${item.suds} · ${item.exposureType.name} · ${item.completedCount}x',
+                              style: TextStyle(
+                                color: Colors.white.withAlpha(150),
+                              ),
                             ),
                             trailing: selected
-                                ? const Icon(Icons.check_circle, color: AppColors.primary)
+                                ? const Icon(
+                                    Icons.check_circle,
+                                    color: AppColors.primary,
+                                  )
                                 : null,
                           ),
                         );
@@ -180,6 +236,9 @@ class _ExposureSessionScreenState extends State<ExposureSessionScreen> {
                   },
                   icon: const Icon(Icons.play_arrow),
                   label: const Text('Start Session'),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
                 ),
               ),
           ],
@@ -189,13 +248,14 @@ class _ExposureSessionScreenState extends State<ExposureSessionScreen> {
   }
 
   Widget _buildPre(FearHierarchyItem task) {
-    return Scaffold(
+    return buildGradientScaffold(
       appBar: AppBar(
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
+          icon: const Icon(Icons.arrow_back, color: Colors.white),
           onPressed: () => setState(() => phase = SessionPhase.select),
         ),
-        title: const Text('Pre-Session'),
+        title: const Text('Pre-Session', style: TextStyle(color: Colors.white)),
+        backgroundColor: Colors.transparent,
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -203,43 +263,68 @@ class _ExposureSessionScreenState extends State<ExposureSessionScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.primaryLight,
+                color: AppColors.primary.withAlpha(30),
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppColors.primary.withAlpha(50)),
               ),
-              child: Text(task.scenario),
+              child: Row(
+                children: [
+                  const Icon(Icons.bolt, color: AppColors.primaryLight),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      task.scenario,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: 16),
-            const Text('What do you predict will happen?'),
+            const SizedBox(height: 24),
+            const Text(
+              'What do you predict will happen?',
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
             const SizedBox(height: 8),
             TextField(
               controller: predictionController,
               maxLines: 3,
+              style: const TextStyle(color: Colors.white),
               onChanged: (_) => setState(() {}),
               decoration: InputDecoration(
                 filled: true,
-                fillColor: AppColors.muted,
+                fillColor: Colors.white.withAlpha(20),
+                hintText: 'My anxiety will explode and...',
+                hintStyle: TextStyle(color: Colors.white.withAlpha(100)),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            SUDSSlider(value: preSuds, onChanged: (v) => setState(() => preSuds = v)),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
+            SUDSSlider(
+              value: preSuds,
+              onChanged: (v) => setState(() => preSuds = v),
+            ),
+            const SizedBox(height: 24),
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: AppColors.calmLight,
+                color: AppColors.calm.withAlpha(20),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Text(
                 'Remember: the goal is learning, not feeling less anxious.',
+                style: TextStyle(color: Colors.white),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -250,12 +335,20 @@ class _ExposureSessionScreenState extends State<ExposureSessionScreen> {
                           phase = SessionPhase.during;
                           isTimerRunning = true;
                           currentSuds = preSuds;
-                          readings.add(SUDSReading(timestamp: DateTime.now(), value: preSuds));
+                          readings.add(
+                            SUDSReading(
+                              timestamp: DateTime.now(),
+                              value: preSuds,
+                            ),
+                          );
                         });
                         startTimer();
                       },
                 icon: const Icon(Icons.play_arrow),
                 label: const Text('Begin Exposure'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
               ),
             ),
           ],
@@ -265,13 +358,29 @@ class _ExposureSessionScreenState extends State<ExposureSessionScreen> {
   }
 
   Widget _buildDuring(FearHierarchyItem task) {
-    return Scaffold(
+    return buildGradientScaffold(
       appBar: AppBar(
-        title: const Text('During Exposure'),
+        title: const Text(
+          'During Exposure',
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.transparent,
+        automaticallyImplyLeading: false,
         actions: [
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Center(child: Text(formatTime(elapsedTime))),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            margin: const EdgeInsets.only(right: 16),
+            decoration: BoxDecoration(
+              color: Colors.white.withAlpha(20),
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Text(
+              formatTime(elapsedTime),
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
@@ -279,32 +388,74 @@ class _ExposureSessionScreenState extends State<ExposureSessionScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            Text(task.scenario, textAlign: TextAlign.center),
+            Text(
+              task.scenario,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 32),
+            SUDSSlider(
+              value: currentSuds,
+              onChanged: (v) => setState(() => currentSuds = v),
+            ),
             const SizedBox(height: 16),
-            SUDSSlider(value: currentSuds, onChanged: (v) => setState(() => currentSuds = v)),
-            const SizedBox(height: 12),
             ElevatedButton(
-              onPressed: () => setState(() => readings.add(
-                  SUDSReading(timestamp: DateTime.now(), value: currentSuds))),
+              onPressed: () => setState(
+                () => readings.add(
+                  SUDSReading(timestamp: DateTime.now(), value: currentSuds),
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.white.withAlpha(20),
+                foregroundColor: Colors.white,
+              ),
               child: Text('Log SUDs (${readings.length})'),
             ),
-            const SizedBox(height: 12),
-            CheckboxListTile(
-              value: compulsionResisted,
-              onChanged: (value) => setState(() => compulsionResisted = value ?? false),
-              title: const Text('I resisted a compulsion'),
+            const SizedBox(height: 32),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white.withAlpha(10),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: CheckboxListTile(
+                value: compulsionResisted,
+                onChanged: (value) =>
+                    setState(() => compulsionResisted = value ?? false),
+                title: const Text(
+                  'I resisted a compulsion',
+                  style: TextStyle(color: Colors.white),
+                ),
+                checkColor: AppColors.primary,
+                activeColor: Colors.white,
+                tileColor: Colors.transparent,
+              ),
             ),
-            const SizedBox(height: 12),
+            const Spacer(),
             Row(
               children: [
                 Expanded(
                   child: OutlinedButton.icon(
-                    onPressed: () => setState(() => isTimerRunning = !isTimerRunning),
-                    icon: Icon(isTimerRunning ? Icons.pause : Icons.play_arrow),
-                    label: Text(isTimerRunning ? 'Pause' : 'Resume'),
+                    onPressed: () =>
+                        setState(() => isTimerRunning = !isTimerRunning),
+                    icon: Icon(
+                      isTimerRunning ? Icons.pause : Icons.play_arrow,
+                      color: Colors.white,
+                    ),
+                    label: Text(
+                      isTimerRunning ? 'Pause' : 'Resume',
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: BorderSide(color: Colors.white.withAlpha(50)),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
                     onPressed: () {
@@ -314,6 +465,9 @@ class _ExposureSessionScreenState extends State<ExposureSessionScreen> {
                         postSuds = currentSuds;
                       });
                     },
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
                     child: const Text('End Exposure'),
                   ),
                 ),
@@ -326,60 +480,89 @@ class _ExposureSessionScreenState extends State<ExposureSessionScreen> {
   }
 
   Widget _buildPost(FearHierarchyItem task, AppState appState) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Post-Session')),
+    return buildGradientScaffold(
+      appBar: AppBar(
+        title: const Text(
+          'Post-Session',
+          style: TextStyle(color: Colors.white),
+        ),
+        backgroundColor: Colors.transparent,
+        automaticallyImplyLeading: false,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.primaryLight,
-                borderRadius: BorderRadius.circular(12),
+                color: AppColors.primary.withAlpha(30),
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.primary.withAlpha(50)),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Session Complete!', style: const TextStyle(fontWeight: FontWeight.bold)),
-                  Text(formatTime(elapsedTime)),
+                  const Text(
+                    'Session Complete!',
+                    style: TextStyle(
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                      fontSize: 18,
+                    ),
+                  ),
+                  Text(
+                    formatTime(elapsedTime),
+                    style: const TextStyle(color: Colors.white, fontSize: 18),
+                  ),
                 ],
               ),
             ),
-            const SizedBox(height: 16),
-            const Text('What actually happened?'),
+            const SizedBox(height: 24),
+            const Text(
+              'What actually happened?',
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
             const SizedBox(height: 8),
             TextField(
               controller: outcomeController,
               maxLines: 3,
+              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 filled: true,
-                fillColor: AppColors.muted,
+                fillColor: Colors.white.withAlpha(20),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
                 ),
               ),
             ),
-            const SizedBox(height: 16),
-            SUDSSlider(value: postSuds, onChanged: (v) => setState(() => postSuds = v)),
-            const SizedBox(height: 16),
-            const Text('What did you learn about uncertainty?'),
+            const SizedBox(height: 24),
+            SUDSSlider(
+              value: postSuds,
+              onChanged: (v) => setState(() => postSuds = v),
+            ),
+            const SizedBox(height: 24),
+            const Text(
+              'What did you learn about uncertainty?',
+              style: TextStyle(color: Colors.white, fontSize: 16),
+            ),
             const SizedBox(height: 8),
             TextField(
               controller: learningsController,
               maxLines: 3,
+              style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 filled: true,
-                fillColor: AppColors.muted,
+                fillColor: Colors.white.withAlpha(20),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
                 ),
               ),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 32),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -396,15 +579,25 @@ class _ExposureSessionScreenState extends State<ExposureSessionScreen> {
                     compulsionResisted: compulsionResisted,
                     duration: elapsedTime,
                   );
-                  appState.earnReward(ExerciseType.inVivo, 'Completed an exposure');
+                  appState.earnReward(
+                    ExerciseType.inVivo,
+                    'Completed an exposure',
+                  );
                   if (compulsionResisted) {
-                    appState.earnReward(ExerciseType.inVivo, 'Resisted a compulsion', bonusAmount: 10);
+                    appState.earnReward(
+                      ExerciseType.inVivo,
+                      'Resisted a compulsion',
+                      bonusAmount: 10,
+                    );
                   }
                   appState.incrementStreak();
                   setState(() => phase = SessionPhase.complete);
                 },
                 icon: const Icon(Icons.check),
                 label: const Text('Complete & Save'),
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                ),
               ),
             ),
           ],
@@ -414,7 +607,7 @@ class _ExposureSessionScreenState extends State<ExposureSessionScreen> {
   }
 
   Widget _buildComplete(AppState appState) {
-    return Scaffold(
+    return buildGradientScaffold(
       body: Center(
         child: Padding(
           padding: const EdgeInsets.all(24),
@@ -430,22 +623,34 @@ class _ExposureSessionScreenState extends State<ExposureSessionScreen> {
                 ),
                 child: const Icon(Icons.check, color: Colors.white, size: 40),
               ),
-              const SizedBox(height: 16),
-              const Text('Amazing Work!',
-                  style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
+              const SizedBox(height: 24),
+              const Text(
+                'Amazing Work!',
+                style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(height: 12),
               Text(
                 'You faced your fear and learned something new.',
                 textAlign: TextAlign.center,
-                style: TextStyle(color: AppColors.mutedText),
+                style: TextStyle(color: Colors.white.withAlpha(180)),
               ),
-              const SizedBox(height: 24),
-              ElevatedButton(
-                onPressed: () {
-                  setState(() => resetSessionState());
-                  appState.setCurrentView(AppView.home);
-                },
-                child: const Text('Back to Home'),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {
+                    setState(() => resetSessionState());
+                    appState.setCurrentView(AppView.home);
+                  },
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                  ),
+                  child: const Text('Back to Home'),
+                ),
               ),
             ],
           ),

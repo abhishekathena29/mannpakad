@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../app_state.dart';
+import '../models.dart';
 import '../theme.dart';
 import '../widgets/app_header.dart';
 import '../widgets/bottom_nav.dart';
@@ -93,7 +94,7 @@ class _TrackerScreenState extends State<TrackerScreen> {
                   dividerColor: Colors.transparent,
                   tabs: const [
                     Tab(text: 'Triggers'),
-                    Tab(text: 'Expectancy Log'),
+                    Tab(text: 'Progress Board'),
                   ],
                 ),
               ),
@@ -200,80 +201,9 @@ class _TrackerScreenState extends State<TrackerScreen> {
                         ],
                       ),
                     ),
-                    SingleChildScrollView(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(20),
-                            decoration: BoxDecoration(
-                              color: AppColors.clarity.withAlpha(30),
-                              borderRadius: BorderRadius.circular(20),
-                              border: Border.all(
-                                color: AppColors.clarity.withAlpha(50),
-                              ),
-                            ),
-                            child: const Text(
-                              'Expectancy violations: the gap between prediction and reality is where new learning happens.',
-                              style: TextStyle(color: Colors.white),
-                            ),
-                          ),
-                          const SizedBox(height: 20),
-                          if (appState.exposureSessions.isEmpty)
-                            _EmptyState(
-                              icon: Icons.trending_up,
-                              title: 'No Sessions Yet',
-                              message:
-                                  'Complete exposure sessions to track expectancy violations.',
-                            )
-                          else
-                            Column(
-                              children: appState.exposureSessions.take(5).map((
-                                session,
-                              ) {
-                                return Container(
-                                  margin: const EdgeInsets.only(bottom: 12),
-                                  padding: const EdgeInsets.all(16),
-                                  decoration: BoxDecoration(
-                                    color: Colors.white.withAlpha(10),
-                                    borderRadius: BorderRadius.circular(16),
-                                    border: Border.all(
-                                      color: Colors.white.withAlpha(10),
-                                    ),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        'Predicted: ${session.prediction}',
-                                        style: TextStyle(
-                                          color: Colors.white.withAlpha(200),
-                                        ),
-                                      ),
-                                      const SizedBox(height: 6),
-                                      Text(
-                                        'Actual: ${session.outcome}',
-                                        style: const TextStyle(
-                                          color: Colors.white,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                      const SizedBox(height: 8),
-                                      Text(
-                                        'Pre ${session.preSuds} → Post ${session.postSuds}',
-                                        style: TextStyle(
-                                          color: AppColors.primaryLight,
-                                          fontWeight: FontWeight.bold,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                        ],
-                      ),
+                    _ProgressBoard(
+                      exposureSessions: appState.exposureSessions,
+                      aiExposureSessions: appState.aiExposureSessions,
                     ),
                   ],
                 ),
@@ -655,6 +585,223 @@ class _AddTriggerSheetState extends State<_AddTriggerSheet> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ProgressBoard extends StatelessWidget {
+  final List<ExposureSession> exposureSessions;
+  final List<AIExposureSession> aiExposureSessions;
+
+  const _ProgressBoard({
+    required this.exposureSessions,
+    required this.aiExposureSessions,
+  });
+
+  Map<String, List<dynamic>> _groupSessions() {
+    // Combine and sort
+    final allSessions = [...exposureSessions, ...aiExposureSessions]
+      ..sort((a, b) {
+        final aDate = a is ExposureSession
+            ? a.completedAt
+            : (a as AIExposureSession).createdAt;
+        final bDate = b is ExposureSession
+            ? b.completedAt
+            : (b as AIExposureSession).createdAt;
+        return bDate.compareTo(aDate);
+      });
+
+    final Map<String, List<dynamic>> grouped = {};
+    for (var session in allSessions) {
+      final date = session is ExposureSession
+          ? session.completedAt
+          : (session as AIExposureSession).createdAt;
+      final now = DateTime.now();
+      String key;
+
+      if (date.year == now.year &&
+          date.month == now.month &&
+          date.day == now.day) {
+        key = 'Today';
+      } else if (date.year == now.year &&
+          date.month == now.month &&
+          date.day == now.day - 1) {
+        key = 'Yesterday';
+      } else {
+        key = '${_weekday(date.weekday)}, ${date.day}/${date.month}';
+      }
+
+      if (!grouped.containsKey(key)) {
+        grouped[key] = [];
+      }
+      grouped[key]!.add(session);
+    }
+    return grouped;
+  }
+
+  String _weekday(int day) {
+    switch (day) {
+      case 1:
+        return 'Monday';
+      case 2:
+        return 'Tuesday';
+      case 3:
+        return 'Wednesday';
+      case 4:
+        return 'Thursday';
+      case 5:
+        return 'Friday';
+      case 6:
+        return 'Saturday';
+      case 7:
+        return 'Sunday';
+      default:
+        return '';
+    }
+  }
+
+  String _formatDuration(int seconds) {
+    if (seconds < 60) {
+      return '${seconds}s';
+    } else {
+      final minutes = seconds ~/ 60;
+      final remainingSeconds = seconds % 60;
+      if (remainingSeconds == 0) return '${minutes}m';
+      return '${minutes}m ${remainingSeconds}s';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (exposureSessions.isEmpty && aiExposureSessions.isEmpty) {
+      return Padding(
+        padding: const EdgeInsets.all(16),
+        child: _EmptyState(
+          icon: Icons.trending_up,
+          title: 'No Progress Yet',
+          message:
+              'Complete exposures to see your progress board here. Higher anxiety tasks require shorter durations.',
+        ),
+      );
+    }
+
+    final grouped = _groupSessions();
+    final keys = grouped.keys.toList();
+
+    return ListView.builder(
+      padding: const EdgeInsets.all(16),
+      itemCount: keys.length,
+      itemBuilder: (context, index) {
+        final day = keys[index];
+        final daySessions = grouped[day]!;
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+              child: Text(
+                day,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                  letterSpacing: 1,
+                ),
+              ),
+            ),
+            ...daySessions.map((session) {
+              final isManual = session is ExposureSession;
+              final duration = isManual
+                  ? session.duration
+                  : (session as AIExposureSession).duration;
+              final postSuds = isManual
+                  ? session.postSuds
+                  : (session as AIExposureSession).postSuds;
+              final typeName = isManual
+                  ? (session.exerciseType.name == 'inVivo'
+                        ? 'In Vivo'
+                        : session.exerciseType.name)
+                  : 'AI Task';
+
+              String title;
+              if (isManual) {
+                title = session.outcome.isNotEmpty
+                    ? session.outcome
+                    : (session.prediction.isNotEmpty
+                          ? session.prediction
+                          : "Exposure Session");
+              } else {
+                title = (session as AIExposureSession).task.title;
+              }
+
+              return Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Colors.white.withAlpha(10),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.white.withAlpha(10)),
+                ),
+                child: Row(
+                  children: [
+                    // Duration Badge
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: AppColors.primary.withAlpha(30),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: AppColors.primary.withAlpha(50),
+                        ),
+                      ),
+                      child: Text(
+                        _formatDuration(duration),
+                        style: const TextStyle(
+                          color: AppColors.primaryLight,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 16,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    // Details
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'SUDs $postSuds · $typeName',
+                            style: TextStyle(
+                              color: Colors.white.withAlpha(150),
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }).toList(),
+            const SizedBox(height: 12),
+          ],
+        );
+      },
     );
   }
 }

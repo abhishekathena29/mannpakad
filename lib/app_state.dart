@@ -11,6 +11,7 @@ class AppState extends ChangeNotifier {
   List<FearHierarchyItem> fearHierarchy = [];
   List<TriggerLog> triggerLogs = [];
   List<ExposureSession> exposureSessions = [];
+  List<AIExposureSession> aiExposureSessions = [];
   List<ReflectionLog> reflectionLogs = [];
   List<BreathingSession> breathingSessions = [];
   List<DefusionSession> defusionSessions = [];
@@ -121,8 +122,9 @@ class AppState extends ChangeNotifier {
           (entry) => entry.id == id
               ? entry.copyWith(
                   completed: !entry.completed,
-                  lastCompletedAt:
-                      entry.completed ? entry.lastCompletedAt : DateTime.now(),
+                  lastCompletedAt: entry.completed
+                      ? entry.lastCompletedAt
+                      : DateTime.now(),
                 )
               : entry,
         )
@@ -158,6 +160,28 @@ class AppState extends ChangeNotifier {
       timestamp: DateTime.now(),
     );
     triggerLogs = [log, ...triggerLogs];
+    notifyListeners();
+  }
+
+  void addAIExposureSession({
+    required AIExposureTask task,
+    required int preSuds,
+    required int postSuds,
+    required Map<String, String> reflectionResponses,
+    required int duration,
+  }) {
+    final session = AIExposureSession(
+      id: _newId(),
+      task: task,
+      preSuds: preSuds,
+      postSuds: postSuds,
+      reflectionResponses: reflectionResponses,
+      duration: duration,
+      completed: true,
+      createdAt: DateTime.now(),
+    );
+    aiExposureSessions = [session, ...aiExposureSessions];
+    progress = progress.copyWith(totalExposures: progress.totalExposures + 1);
     notifyListeners();
   }
 
@@ -392,6 +416,7 @@ class AppState extends ChangeNotifier {
     fearHierarchy = [];
     triggerLogs = [];
     exposureSessions = [];
+    aiExposureSessions = [];
     reflectionLogs = [];
     breathingSessions = [];
     defusionSessions = [];
@@ -420,7 +445,9 @@ class AppState extends ChangeNotifier {
     if (hierarchyItemId.isEmpty) {
       return;
     }
-    final index = fearHierarchy.indexWhere((item) => item.id == hierarchyItemId);
+    final index = fearHierarchy.indexWhere(
+      (item) => item.id == hierarchyItemId,
+    );
     if (index == -1) {
       return;
     }

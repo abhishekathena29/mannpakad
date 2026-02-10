@@ -245,6 +245,17 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ),
 
+                    // Progress Summary (New)
+                    if (appState.exposureSessions.isNotEmpty ||
+                        appState.aiExposureSessions.isNotEmpty)
+                      _ProgressSummaryCard(
+                        exposureSessions: appState.exposureSessions,
+                        aiExposureSessions: appState.aiExposureSessions,
+                        onTap: () => appState.setCurrentView(AppView.tracker),
+                      ),
+
+                    const SizedBox(height: 24),
+
                     const Text(
                       'Exercises',
                       style: TextStyle(
@@ -446,6 +457,108 @@ class _StatTile extends StatelessWidget {
               ),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ProgressSummaryCard extends StatelessWidget {
+  final List<ExposureSession> exposureSessions;
+  final List<AIExposureSession> aiExposureSessions;
+  final VoidCallback onTap;
+
+  const _ProgressSummaryCard({
+    required this.exposureSessions,
+    required this.aiExposureSessions,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final totalSessions = exposureSessions.length + aiExposureSessions.length;
+    final lastSessionDate = [
+      ...exposureSessions.map((e) => e.completedAt),
+      ...aiExposureSessions.map((e) => e.createdAt),
+    ]..sort((a, b) => b.compareTo(a));
+
+    final lastDate = lastSessionDate.isNotEmpty
+        ? lastSessionDate.first
+        : DateTime.now();
+
+    final timeAgo = DateTime.now().difference(lastDate);
+    String timeLabel;
+    if (timeAgo.inMinutes < 60) {
+      timeLabel = 'Just now';
+    } else if (timeAgo.inHours < 24) {
+      timeLabel = '${timeAgo.inHours}h ago';
+    } else {
+      timeLabel = '${timeAgo.inDays}d ago';
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 24),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withAlpha(20)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withAlpha(20),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(24),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.accent.withAlpha(30),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.trending_up, color: AppColors.accent),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Recent Progress',
+                        style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                          fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '$totalSessions exposures completed · Last $timeLabel',
+                        style: TextStyle(
+                          color: Colors.white.withAlpha(150),
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const Icon(
+                  Icons.arrow_forward_ios_rounded,
+                  color: Colors.white30,
+                  size: 16,
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

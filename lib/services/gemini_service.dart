@@ -263,35 +263,35 @@ Return ONLY a valid JSON array. No markdown, no explanation.
   }
 
   String _getDurationGuidance(int suds) {
-    if (suds <= 20) {
-      return '''- Brief, partial exposure (5-10 seconds)
-- Start with minimal contact
-- Focus on initial anxiety tolerance''';
-    } else if (suds <= 40) {
-      return '''- Short exposure with delay (30 seconds - 1 minute)
-- Prevent immediate compulsion response
-- Begin building distress tolerance''';
-    } else if (suds <= 60) {
-      return '''- Moderate exposure (2-3 minutes)
-- Sustained contact with feared stimulus
-- Practice staying present with discomfort''';
-    } else if (suds <= 80) {
-      return '''- Extended exposure (5+ minutes)
-- Full engagement with anxiety-provoking situation
-- Build capacity for prolonged uncertainty''';
+    if (suds >= 80) {
+      return '''- Very brief exposure (10-30 seconds)
+- High intensity, short duration
+- Focus on surviving the spike''';
+    } else if (suds >= 60) {
+      return '''- Short exposure (30 seconds - 2 minutes)
+- Moderate-high intensity
+- Practice non-engagement with urges''';
+    } else if (suds >= 40) {
+      return '''- Moderate exposure (2-5 minutes)
+- Balanced intensity
+- Focus on sitting with uncertainty''';
+    } else if (suds >= 20) {
+      return '''- Long exposure (5-10 minutes)
+- Lower intensity allows longer duration
+- Practice mindfulness of mild discomfort''';
     } else {
-      return '''- Prolonged, full exposure (10+ minutes)
-- Complete immersion in feared scenario
-- Maximum tolerance building''';
+      return '''- Extended exposure (10+ minutes)
+- Low intensity training
+- Focus on boredom and habituation''';
     }
   }
 
   String _getDurationLabel(int suds) {
-    if (suds <= 20) return 'brief';
-    if (suds <= 40) return 'short';
-    if (suds <= 60) return 'moderate';
-    if (suds <= 80) return 'extended';
-    return 'prolonged';
+    if (suds >= 80) return 'very brief';
+    if (suds >= 60) return 'short';
+    if (suds >= 40) return 'moderate';
+    if (suds >= 20) return 'long';
+    return 'extended';
   }
 
   String _getOCDContext(OCDTheme theme) {

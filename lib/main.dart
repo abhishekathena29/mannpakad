@@ -1,31 +1,42 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:mannpakad/core/models/app_models.dart';
+import 'package:mannpakad/core/state/app_state.dart';
+import 'package:mannpakad/core/theme/app_theme.dart';
+import 'package:mannpakad/features/ai_exposure/screens/ai_exposure_screen.dart';
+import 'package:mannpakad/features/auth/providers/app_auth_provider.dart';
+import 'package:mannpakad/features/auth/screens/login_screen.dart';
+import 'package:mannpakad/features/auth/screens/signup_screen.dart';
+import 'package:mannpakad/features/auth/screens/welcome_screen.dart';
+import 'package:mannpakad/features/avatar/screens/avatar_creation_screen.dart';
+import 'package:mannpakad/features/breathing/screens/breathing_exercise_screen.dart';
+import 'package:mannpakad/features/defusion/screens/cognitive_defusion_screen.dart';
+import 'package:mannpakad/features/exposure/screens/exposure_session_screen.dart';
+import 'package:mannpakad/features/hierarchy/screens/hierarchy_screen.dart';
+import 'package:mannpakad/features/home/screens/home_screen.dart';
+import 'package:mannpakad/features/journaling/screens/journaling_screen.dart';
+import 'package:mannpakad/features/learn/screens/learn_screen.dart';
+import 'package:mannpakad/features/onboarding/screens/onboarding_screen.dart';
+import 'package:mannpakad/features/rewards/screens/rewards_screen.dart';
+import 'package:mannpakad/features/settings/screens/settings_screen.dart';
+import 'package:mannpakad/features/simulation/screens/simulation_screen.dart';
+import 'package:mannpakad/features/tracker/screens/tracker_screen.dart';
+import 'package:mannpakad/features/values/screens/values_screen.dart';
 import 'package:mannpakad/firebase_options.dart';
-import 'app_state.dart';
-import 'models.dart';
-import 'theme.dart';
-import 'screens/welcome_screen.dart';
-import 'screens/onboarding_screen.dart';
-import 'screens/avatar_creation_screen.dart';
-import 'screens/home_screen.dart';
-import 'screens/hierarchy_screen.dart';
-import 'screens/exposure_session_screen.dart';
-import 'screens/tracker_screen.dart';
-import 'screens/learn_screen.dart';
-import 'screens/rewards_screen.dart';
-import 'screens/settings_screen.dart';
-import 'screens/breathing_exercise_screen.dart';
-import 'screens/cognitive_defusion_screen.dart';
-import 'screens/values_screen.dart';
-import 'screens/journaling_screen.dart';
-import 'screens/simulation_screen.dart';
-import 'screens/ai_exposure_screen.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   final appState = AppState();
-  runApp(AppStateScope(notifier: appState, child: const MannPakadApp()));
+  final authProvider = AppAuthProvider(appState: appState);
+
+  runApp(
+    AppStateScope(
+      notifier: appState,
+      child: AppAuthScope(notifier: authProvider, child: const MannPakadApp()),
+    ),
+  );
 }
 
 class MannPakadApp extends StatelessWidget {
@@ -47,17 +58,30 @@ class AppShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final auth = AppAuthScope.of(context);
     final appState = AppStateScope.of(context);
 
-    if (!appState.isOnboarded) {
-      switch (appState.currentView) {
-        case AppView.onboarding:
-          return const OnboardingScreen();
-        case AppView.avatarCreation:
-          return const AvatarCreationScreen();
-        default:
+    if (auth.isBootstrapping) {
+      return const _SplashScreen();
+    }
+
+    if (!auth.isAuthenticated) {
+      switch (auth.currentView) {
+        case AuthView.login:
+          return const LoginScreen();
+        case AuthView.signup:
+          return const SignupScreen();
+        case AuthView.welcome:
           return const WelcomeScreen();
       }
+    }
+
+    if (auth.needsOnboarding) {
+      return const OnboardingScreen();
+    }
+
+    if (auth.needsAvatar) {
+      return const AvatarCreationScreen();
     }
 
     switch (appState.currentView) {
@@ -90,5 +114,25 @@ class AppShell extends StatelessWidget {
       default:
         return const HomeScreen();
     }
+  }
+}
+
+class _SplashScreen extends StatelessWidget {
+  const _SplashScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: AppColors.gradientDark,
+          ),
+        ),
+        child: const Center(child: CircularProgressIndicator()),
+      ),
+    );
   }
 }

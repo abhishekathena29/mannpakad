@@ -52,7 +52,8 @@ class DefaultFirebaseOptions {
     messagingSenderId: '896657963986',
     projectId: 'mannpakad',
     authDomain: 'mannpakad.firebaseapp.com',
-    databaseURL: 'https://mannpakad-default-rtdb.asia-southeast1.firebasedatabase.app',
+    databaseURL:
+        'https://mannpakad-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'mannpakad.firebasestorage.app',
     measurementId: 'G-55ZVC4Z7NW',
   );
@@ -62,7 +63,8 @@ class DefaultFirebaseOptions {
     appId: '1:896657963986:android:6f56f9706115caab93260b',
     messagingSenderId: '896657963986',
     projectId: 'mannpakad',
-    databaseURL: 'https://mannpakad-default-rtdb.asia-southeast1.firebasedatabase.app',
+    databaseURL:
+        'https://mannpakad-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'mannpakad.firebasestorage.app',
   );
 
@@ -71,9 +73,9 @@ class DefaultFirebaseOptions {
     appId: '1:896657963986:ios:cbffff1de551cf4393260b',
     messagingSenderId: '896657963986',
     projectId: 'mannpakad',
-    databaseURL: 'https://mannpakad-default-rtdb.asia-southeast1.firebasedatabase.app',
+    databaseURL:
+        'https://mannpakad-default-rtdb.asia-southeast1.firebasedatabase.app',
     storageBucket: 'mannpakad.firebasestorage.app',
     iosBundleId: 'com.example.mannpakad',
   );
-
 }

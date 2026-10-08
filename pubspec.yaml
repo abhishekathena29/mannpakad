@@ -38,7 +38,7 @@ dependencies:
   firebase_core:
   cloud_firestore:
   firebase_database:
-  google_generative_ai: ^0.4.6
+  http: ^1.2.2
 
 dev_dependencies:
   flutter_test:

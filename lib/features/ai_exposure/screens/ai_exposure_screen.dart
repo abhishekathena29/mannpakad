@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:mannpakad/core/state/app_state.dart';
 import 'package:mannpakad/core/models/app_models.dart';
 import 'package:mannpakad/core/theme/app_theme.dart';
-import 'package:mannpakad/features/ai_exposure/services/gemini_service.dart';
+import 'package:mannpakad/features/ai_exposure/services/groq_service.dart';
 import 'package:mannpakad/shared/widgets/suds_slider.dart';
 
 enum AIExposurePhase {
@@ -27,7 +27,7 @@ class AIExposureScreen extends StatefulWidget {
 
 class _AIExposureScreenState extends State<AIExposureScreen> {
   AIExposurePhase phase = AIExposurePhase.loading;
-  final GeminiService _geminiService = GeminiService();
+  final GroqService _groqService = GroqService();
 
   // Loading state
   bool isLoading = true;
@@ -74,7 +74,7 @@ class _AIExposureScreenState extends State<AIExposureScreen> {
     });
 
     try {
-      final hasKey = await _geminiService.initialize();
+      final hasKey = await _groqService.initialize();
       setState(() {
         isLoading = false;
         if (hasKey) {
@@ -82,7 +82,7 @@ class _AIExposureScreenState extends State<AIExposureScreen> {
         } else {
           phase = AIExposurePhase.noApiKey;
           errorMessage =
-              'Gemini API key not found in Firebase Realtime Database. Please add it to "config/gemini/api_key".';
+              'Groq API key not found in Firestore. Please add "api_key" to the "config/groq" document.';
         }
       });
     } catch (e) {
@@ -106,7 +106,7 @@ class _AIExposureScreenState extends State<AIExposureScreen> {
           ? appState.userProfile!.ocdThemes.first
           : OCDTheme.contamination;
 
-      final tasks = await _geminiService.generateExposureTasks(
+      final tasks = await _groqService.generateExposureTasks(
         ocdTheme: ocdTheme,
         sudsLevel: selectedSuds,
         exerciseType: selectedExerciseType,
@@ -152,7 +152,7 @@ class _AIExposureScreenState extends State<AIExposureScreen> {
     });
 
     try {
-      final questions = await _geminiService.generateReflectionQuestions(
+      final questions = await _groqService.generateReflectionQuestions(
         taskDescription: selectedTask!.description,
         exerciseType: selectedTask!.exerciseType,
       );
@@ -310,7 +310,7 @@ class _AIExposureScreenState extends State<AIExposureScreen> {
             ),
             const SizedBox(height: 8),
             Text(
-              'Connecting to Gemini...',
+              'Connecting to AI...',
               style: TextStyle(color: Colors.white.withAlpha(180)),
             ),
           ],
@@ -359,7 +359,7 @@ class _AIExposureScreenState extends State<AIExposureScreen> {
                 border: Border.all(color: Colors.white.withAlpha(30)),
               ),
               child: Text(
-                errorMessage ?? 'Please add Gemini API key to RTDB.',
+                errorMessage ?? 'Please add Groq API key to Firestore.',
                 textAlign: TextAlign.center,
                 style: TextStyle(color: Colors.white.withAlpha(200)),
               ),
@@ -394,7 +394,7 @@ class _AIExposureScreenState extends State<AIExposureScreen> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    '1. Go to Firebase Console > Realtime Database\n2. Create path: "config/gemini/api_key"\n3. Set value to your Gemini API Key string',
+                    '1. Go to Firebase Console > Firestore Database\n2. Create document: "config/groq"\n3. Add string field "api_key" with your Groq API key\n4. (Optional) Add string field "model", e.g. "llama-3.3-70b-versatile"',
                     style: TextStyle(
                       color: Colors.white.withAlpha(200),
                       fontSize: 13,

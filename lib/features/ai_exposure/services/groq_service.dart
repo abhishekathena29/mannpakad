@@ -1,35 +1,50 @@
 import 'dart:convert';
-import 'package:google_generative_ai/google_generative_ai.dart';
-import 'package:firebase_database/firebase_database.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:http/http.dart' as http;
 import 'package:mannpakad/core/models/app_models.dart';
 
-class GeminiService {
-  static final GeminiService _instance = GeminiService._internal();
-  factory GeminiService() => _instance;
-  GeminiService._internal();
+class GroqService {
+  static final GroqService _instance = GroqService._internal();
+  factory GroqService() => _instance;
+  GroqService._internal();
 
-  static const String _rtdbPath = 'config/gemini/api_key';
+  /// Firestore document holding `api_key` and `model` fields.
+  static const String _configCollection = 'config';
+  static const String _configDoc = 'groq';
+  static const String _defaultModel = 'llama-3.3-70b-versatile';
+  static final Uri _endpoint = Uri.parse(
+    'https://api.groq.com/openai/v1/chat/completions',
+  );
 
-  GenerativeModel? _model;
   String? _apiKey;
+  String _model = _defaultModel;
   bool _isInitialized = false;
 
-  /// Initialize service by fetching API key from Firebase Realtime Database
+  DocumentReference<Map<String, dynamic>> get _configRef => FirebaseFirestore
+      .instance
+      .collection(_configCollection)
+      .doc(_configDoc);
+
+  /// Initialize service by fetching API key and model from Firestore
   Future<bool> initialize() async {
     if (_isInitialized && _apiKey != null) {
       return true;
     }
 
     try {
-      final ref = FirebaseDatabase.instance.ref(_rtdbPath);
-      final snapshot = await ref.get();
+      final snapshot = await _configRef.get();
+      final data = snapshot.data();
+      if (data == null) return false;
 
-      if (snapshot.exists && snapshot.value != null) {
-        _apiKey = snapshot.value as String?;
-        if (_apiKey != null && _apiKey!.isNotEmpty) {
-          _isInitialized = true;
-          return true;
-        }
+      final apiKey = data['api_key'] as String?;
+      final model = data['model'] as String?;
+      if (model != null && model.isNotEmpty) {
+        _model = model;
+      }
+      if (apiKey != null && apiKey.isNotEmpty) {
+        _apiKey = apiKey;
+        _isInitialized = true;
+        return true;
       }
       return false;
     } catch (e) {
@@ -50,38 +65,60 @@ class GeminiService {
     return _apiKey;
   }
 
-  /// Save API key to RTDB (for admin use)
-  Future<void> setApiKey(String apiKey) async {
+  /// Get current model
+  String getModel() {
+    return _model;
+  }
+
+  /// Save API key (and optionally model) to Firestore (for admin use)
+  Future<void> setConfig({required String apiKey, String? model}) async {
     try {
-      final ref = FirebaseDatabase.instance.ref(_rtdbPath);
-      await ref.set(apiKey);
+      await _configRef.set({
+        'api_key': apiKey,
+        if (model != null && model.isNotEmpty) 'model': model,
+      }, SetOptions(merge: true));
 
       _apiKey = apiKey;
-      _model = null; // Reset model to use new key
+      if (model != null && model.isNotEmpty) _model = model;
       _isInitialized = true;
     } catch (e) {
-      throw Exception('Failed to save API key to RTDB: $e');
+      throw Exception('Failed to save Groq config to Firestore: $e');
     }
   }
 
-  GenerativeModel _getModel() {
-    if (_model != null) return _model!;
+  /// Send a single-prompt chat completion request to Groq and return the text
+  Future<String> _complete(String prompt) async {
     if (_apiKey == null || _apiKey!.isEmpty) {
       throw Exception(
-        'Gemini API key not configured. Please add the key to RTDB at config/gemini/api_key.',
+        'Groq API key not configured. Please add "api_key" to Firestore at config/groq.',
       );
     }
-    _model = GenerativeModel(
-      model: 'gemini-2.0-flash',
-      apiKey: _apiKey!,
-      generationConfig: GenerationConfig(
-        temperature: 0.7,
-        topK: 40,
-        topP: 0.95,
-        maxOutputTokens: 2048,
-      ),
+
+    final response = await http.post(
+      _endpoint,
+      headers: {
+        'Authorization': 'Bearer $_apiKey',
+        'Content-Type': 'application/json',
+      },
+      body: json.encode({
+        'model': _model,
+        'messages': [
+          {'role': 'user', 'content': prompt},
+        ],
+        'temperature': 0.7,
+        'top_p': 0.95,
+        'max_tokens': 2048,
+      }),
     );
-    return _model!;
+
+    if (response.statusCode != 200) {
+      throw Exception('Groq API error ${response.statusCode}: ${response.body}');
+    }
+
+    final body = json.decode(utf8.decode(response.bodyBytes));
+    final text = body['choices']?[0]?['message']?['content'] as String?;
+    if (text == null || text.isEmpty) throw Exception('Empty response from Groq');
+    return text;
   }
 
   Future<List<AIExposureTask>> generateExposureTasks({
@@ -94,8 +131,6 @@ class GeminiService {
     if (!_isInitialized) {
       await initialize();
     }
-
-    final model = _getModel();
 
     final durationGuidance = _getDurationGuidance(sudsLevel);
     final ocdContext = _getOCDContext(ocdTheme);
@@ -132,9 +167,7 @@ Return ONLY a valid JSON array of task objects. No markdown, no explanation.
 ''';
 
     try {
-      final response = await model.generateContent([Content.text(prompt)]);
-      final text = response.text;
-      if (text == null) throw Exception('Empty response from Gemini');
+      final text = await _complete(prompt);
 
       // Clean response - remove markdown code blocks if present
       String cleanedText = text.trim();
@@ -179,8 +212,6 @@ Return ONLY a valid JSON array of task objects. No markdown, no explanation.
       await initialize();
     }
 
-    final model = _getModel();
-
     final prompt =
         '''
 You are an ERP therapy assistant generating reflection questions after an exposure task.
@@ -223,9 +254,7 @@ Return ONLY a valid JSON array. No markdown, no explanation.
 ''';
 
     try {
-      final response = await model.generateContent([Content.text(prompt)]);
-      final text = response.text;
-      if (text == null) throw Exception('Empty response from Gemini');
+      final text = await _complete(prompt);
 
       String cleanedText = text.trim();
       if (cleanedText.startsWith('```json')) {
